@@ -3,6 +3,8 @@ package gui;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -13,6 +15,8 @@ import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+
+import javax.swing.*;
 
 import log.Logger;
 
@@ -45,8 +49,18 @@ public class MainApplicationFrame extends JFrame
         gameWindow.setSize(400,  400);
         addWindow(gameWindow);
 
+        addWindowListener(createExitActionListener());
+
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+    }
+
+    protected WindowAdapter createExitActionListener() {
+        return new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+            }
+        };
     }
     
     protected LogWindow createLogWindow()
@@ -94,6 +108,20 @@ public class MainApplicationFrame extends JFrame
 // 
 //        return menuBar;
 //    }
+
+    private void exit()
+    {
+        UIManager.put("OptionPane.noButtonText", "Нет");
+        UIManager.put("OptionPane.yesButtonText", "Да");
+        int result = JOptionPane.showConfirmDialog(
+                null,
+                "Вы уверенны что хотите выйти?",
+                "Окно подтверждения",
+                JOptionPane.YES_NO_OPTION);
+        if (result == JOptionPane.YES_OPTION){
+            System.exit(0);
+        }
+    }
     
     private JMenuBar generateMenuBar()
     {
@@ -135,11 +163,26 @@ public class MainApplicationFrame extends JFrame
             testMenu.add(addLogMessageItem);
         }
 
+        JMenu settingMenu = new JMenu("Настройки");
+        settingMenu.setMnemonic(KeyEvent.VK_T);
+        settingMenu.getAccessibleContext().setAccessibleDescription(
+                "Выход");
+
+        {
+            JMenuItem exitMassageItem = new JMenuItem("Выход", KeyEvent.VK_S);
+            exitMassageItem.addActionListener((event) -> {
+                exit();
+            });
+            settingMenu.add(exitMassageItem);
+        }
+
+
         menuBar.add(lookAndFeelMenu);
         menuBar.add(testMenu);
+        menuBar.add(settingMenu);
         return menuBar;
     }
-    
+
     private void setLookAndFeel(String className)
     {
         try
