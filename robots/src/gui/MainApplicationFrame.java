@@ -45,22 +45,19 @@ public class MainApplicationFrame extends JFrame
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
 
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                MainApplicationFrame.confirmExit();
+            }
+        });
+
         GameWindow gameWindow = new GameWindow();
         gameWindow.setSize(400,  400);
         addWindow(gameWindow);
 
-        addWindowListener(createExitActionListener());
-
         setJMenuBar(generateMenuBar());
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-    }
-
-    protected WindowAdapter createExitActionListener() {
-        return new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-            }
-        };
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
     
     protected LogWindow createLogWindow()
@@ -108,20 +105,6 @@ public class MainApplicationFrame extends JFrame
 // 
 //        return menuBar;
 //    }
-
-    private void exit()
-    {
-        UIManager.put("OptionPane.noButtonText", "Нет");
-        UIManager.put("OptionPane.yesButtonText", "Да");
-        int result = JOptionPane.showConfirmDialog(
-                null,
-                "Вы уверенны что хотите выйти?",
-                "Окно подтверждения",
-                JOptionPane.YES_NO_OPTION);
-        if (result == JOptionPane.YES_OPTION){
-            System.exit(0);
-        }
-    }
     
     private JMenuBar generateMenuBar()
     {
@@ -163,24 +146,30 @@ public class MainApplicationFrame extends JFrame
             testMenu.add(addLogMessageItem);
         }
 
-        JMenu settingMenu = new JMenu("Настройки");
-        settingMenu.setMnemonic(KeyEvent.VK_T);
-        settingMenu.getAccessibleContext().setAccessibleDescription(
-                "Выход");
-
+        JMenu exitMenu = new JMenu("Выход");
         {
-            JMenuItem exitMassageItem = new JMenuItem("Выход", KeyEvent.VK_S);
-            exitMassageItem.addActionListener((event) -> {
-                exit();
+            JMenuItem subExitItem = new JMenuItem("Закрыть приложение", KeyEvent.VK_E);
+            subExitItem.addActionListener((event) -> {
+                confirmExit();
             });
-            settingMenu.add(exitMassageItem);
+            exitMenu.add(subExitItem);
         }
 
 
         menuBar.add(lookAndFeelMenu);
         menuBar.add(testMenu);
-        menuBar.add(settingMenu);
+        menuBar.add(exitMenu);
         return menuBar;
+    }
+
+    public static void confirmExit()
+    {
+        JFrame frame = new JFrame("Exit confirmation frame");
+        String[] options = { "Да", "Нет" };
+        int n = JOptionPane.showOptionDialog(frame, "Вы действительно хотите закрыть приложение?",
+                "Подтверждение", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+        if (n == 0)
+            System.exit(0);
     }
 
     private void setLookAndFeel(String className)
