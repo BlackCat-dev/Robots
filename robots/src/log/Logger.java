@@ -11,9 +11,10 @@ public final class Logger
     {
     }
 
-    public static void debug(String strMessage)
+    public static Runnable debug(String strMessage)
     {
         defaultLogSource.append(LogLevel.Debug, strMessage);
+        return null;
     }
     
     public static void error(String strMessage)

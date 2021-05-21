@@ -23,19 +23,19 @@ import log.Logger;
 public class MainApplicationFrame extends JFrame
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    
+
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
         //of the screen.
-        int inset = 50;        
+        int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
-            screenSize.width  - inset*2,
-            screenSize.height - inset*2);
+                screenSize.width  - inset*2,
+                screenSize.height - inset*2);
 
         setContentPane(desktopPane);
-        
-        
+
+
         LogWindow logWindow = createLogWindow();
         addWindow(logWindow);
 
@@ -53,7 +53,7 @@ public class MainApplicationFrame extends JFrame
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
-    
+
     protected LogWindow createLogWindow()
     {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
@@ -64,21 +64,21 @@ public class MainApplicationFrame extends JFrame
         Logger.debug("Протокол работает");
         return logWindow;
     }
-    
+
     protected void addWindow(JInternalFrame frame)
     {
         desktopPane.add(frame);
         frame.setVisible(true);
     }
-    
+
 //    protected JMenuBar createMenuBar() {
 //        JMenuBar menuBar = new JMenuBar();
-// 
+//
 //        //Set up the lone menu.
 //        JMenu menu = new JMenu("Document");
 //        menu.setMnemonic(KeyEvent.VK_D);
 //        menuBar.add(menu);
-// 
+//
 //        //Set up the first menu item.
 //        JMenuItem menuItem = new JMenuItem("New");
 //        menuItem.setMnemonic(KeyEvent.VK_N);
@@ -87,7 +87,7 @@ public class MainApplicationFrame extends JFrame
 //        menuItem.setActionCommand("new");
 ////        menuItem.addActionListener(this);
 //        menu.add(menuItem);
-// 
+//
 //        //Set up the second menu item.
 //        menuItem = new JMenuItem("Quit");
 //        menuItem.setMnemonic(KeyEvent.VK_Q);
@@ -96,10 +96,10 @@ public class MainApplicationFrame extends JFrame
 //        menuItem.setActionCommand("quit");
 ////        menuItem.addActionListener(this);
 //        menu.add(menuItem);
-// 
+//
 //        return menuBar;
 //    }
-    
+
     private JMenuBar generateMenuBar()
     {
         JMenuBar menuBar = new JMenuBar();
@@ -113,13 +113,19 @@ public class MainApplicationFrame extends JFrame
         return menuBar;
     }
 
+    private static JMenu createSubMenu(String name, int key, String... subMenuNames) {
+        JMenu menu = new JMenu(name);
+        menu.setMnemonic(key);
+        for (String menuName : subMenuNames) {
+            menu.getAccessibleContext().setAccessibleDescription(menuName);
+        }
+        return menu;
+    }
+
     private JMenu CreateLookAndFeelMenu()
     {
-        JMenu lookAndFeelMenu = new JMenu("Режим отображения");
-        lookAndFeelMenu.setMnemonic(KeyEvent.VK_V);
-        lookAndFeelMenu
-                .getAccessibleContext()
-                .setAccessibleDescription("Управление режимом отображения приложения");
+        JMenu lookAndFeelMenu = createSubMenu("Режим отображения", KeyEvent.VK_V,
+                "Управление режимом отображения приложения");
         JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
         systemLookAndFeel.addActionListener((event) -> {
             setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -137,10 +143,7 @@ public class MainApplicationFrame extends JFrame
 
     private JMenu CreateTestMenu()
     {
-        JMenu testMenu = new JMenu("Тесты");
-        testMenu.setMnemonic(KeyEvent.VK_T);
-        testMenu.getAccessibleContext()
-                .setAccessibleDescription("Тестовые команды");
+        JMenu testMenu = createSubMenu("Тесты", KeyEvent.VK_T, "Тестовые команды");
         JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
         addLogMessageItem.addActionListener((event) -> {
             Logger.debug("Новая строка");
@@ -151,7 +154,7 @@ public class MainApplicationFrame extends JFrame
 
     private JMenu CreateExitMenu()
     {
-        JMenu exitMenu = new JMenu("Выход");
+        JMenu exitMenu = createSubMenu("Выход", KeyEvent.VK_E, "Закрытие приложения");
         JMenuItem subExitItem = new JMenuItem("Закрыть приложение", KeyEvent.VK_E);
         subExitItem.addActionListener((event) -> {
             confirmExit();
@@ -180,7 +183,7 @@ public class MainApplicationFrame extends JFrame
             SwingUtilities.updateComponentTreeUI(this);
         }
         catch (ClassNotFoundException | InstantiationException
-            | IllegalAccessException | UnsupportedLookAndFeelException e)
+                | IllegalAccessException | UnsupportedLookAndFeelException e)
         {
             // just ignore
         }
