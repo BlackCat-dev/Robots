@@ -2,9 +2,7 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
@@ -103,67 +101,70 @@ public class MainApplicationFrame extends JFrame
     private JMenuBar generateMenuBar()
     {
         JMenuBar menuBar = new JMenuBar();
-
-        JMenu lookAndFeelMenu = CreateLookAndFeelMenu();
-        JMenu testMenu = CreateTestMenu();
-        JMenu exitMenu = CreateExitMenu();
-        menuBar.add(lookAndFeelMenu);
-        menuBar.add(testMenu);
-        menuBar.add(exitMenu);
+        menuBar.add(CreateLookAndFeelMenu());
+        menuBar.add(CreateTestMenu());
+        menuBar.add(CreateExitMenu());
         return menuBar;
     }
 
-    private static JMenu createSubMenu(String name, int key, String... subMenuNames) {
+    private static JMenu createSubMenu(String name, int key, String subMenuNames) {
         JMenu menu = new JMenu(name);
         menu.setMnemonic(key);
-        for (String menuName : subMenuNames) {
-            menu.getAccessibleContext().setAccessibleDescription(menuName);
-        }
+        menu.getAccessibleContext().setAccessibleDescription(subMenuNames);
         return menu;
+    }
+
+    private JMenuItem createMenuItem(String name, int key, JMenu menu)
+    {
+        JMenuItem item = new JMenuItem(name, key);
+        menu.add(item);
+        return item;
     }
 
     private JMenu CreateLookAndFeelMenu()
     {
         JMenu lookAndFeelMenu = createSubMenu("Режим отображения", KeyEvent.VK_V,
                 "Управление режимом отображения приложения");
-        JMenuItem systemLookAndFeel = new JMenuItem("Системная схема", KeyEvent.VK_S);
-        systemLookAndFeel.addActionListener((event) -> {
-            setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            this.invalidate();
-        });
-        lookAndFeelMenu.add(systemLookAndFeel);
-        JMenuItem crossplatformLookAndFeel = new JMenuItem("Универсальная схема", KeyEvent.VK_S);
-        crossplatformLookAndFeel.addActionListener((event) -> {
-            setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-            this.invalidate();
-        });
-        lookAndFeelMenu.add(crossplatformLookAndFeel);
+        JMenuItem systemLookAndFeel = createMenuItem("Системная схема", KeyEvent.VK_S, lookAndFeelMenu);
+        addLookAndFeelListener(systemLookAndFeel, UIManager.getSystemLookAndFeelClassName());
+        JMenuItem crossplatformLookAndFeel = createMenuItem("Универсальная схема", KeyEvent.VK_S, lookAndFeelMenu);
+        addLookAndFeelListener(crossplatformLookAndFeel, UIManager.getCrossPlatformLookAndFeelClassName());
         return lookAndFeelMenu;
     }
 
     private JMenu CreateTestMenu()
     {
         JMenu testMenu = createSubMenu("Тесты", KeyEvent.VK_T, "Тестовые команды");
-        JMenuItem addLogMessageItem = new JMenuItem("Сообщение в лог", KeyEvent.VK_S);
-        addLogMessageItem.addActionListener((event) -> {
-            Logger.debug("Новая строка");
-        });
-        testMenu.add(addLogMessageItem);
+        JMenuItem addLogMessageItem = createMenuItem("Сообщение в лог", KeyEvent.VK_S, testMenu);
+        addTestListener(addLogMessageItem);
         return testMenu;
     }
 
     private JMenu CreateExitMenu()
     {
         JMenu exitMenu = createSubMenu("Выход", KeyEvent.VK_E, "Закрытие приложения");
-        JMenuItem subExitItem = new JMenuItem("Закрыть приложение", KeyEvent.VK_E);
-        subExitItem.addActionListener((event) -> {
-            confirmExit();
-        });
-        exitMenu.add(subExitItem);
+        JMenuItem subExitItem = createMenuItem("Закрыть приложение", KeyEvent.VK_E, exitMenu);
+        addExitListener(subExitItem);
         return exitMenu;
     }
 
+    private void addLookAndFeelListener(JMenuItem item, String name)
+    {
+        item.addActionListener((event) -> {
+            setLookAndFeel(name);
+            this.invalidate();
+        });
+    }
 
+    private void addTestListener(JMenuItem item)
+    {
+        item.addActionListener((event) -> { Logger.debug("Новая строка"); });
+    }
+
+    private void addExitListener(JMenuItem item)
+    {
+        item.addActionListener((event) -> { confirmExit(); });
+    }
 
     public static void confirmExit()
     {
