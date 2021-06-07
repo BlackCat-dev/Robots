@@ -114,56 +114,38 @@ public class MainApplicationFrame extends JFrame
         return menu;
     }
 
-    private JMenuItem createMenuItem(String name, int key, JMenu menu)
+    private void createMenuItem(String name, int key, JMenu menu, ActionListener action)
     {
         JMenuItem item = new JMenuItem(name, key);
+        item.addActionListener(action);
         menu.add(item);
-        return item;
     }
 
     private JMenu CreateLookAndFeelMenu()
     {
         JMenu lookAndFeelMenu = createSubMenu("Режим отображения", KeyEvent.VK_V,
                 "Управление режимом отображения приложения");
-        JMenuItem systemLookAndFeel = createMenuItem("Системная схема", KeyEvent.VK_S, lookAndFeelMenu);
-        addLookAndFeelListener(systemLookAndFeel, UIManager.getSystemLookAndFeelClassName());
-        JMenuItem crossplatformLookAndFeel = createMenuItem("Универсальная схема", KeyEvent.VK_S, lookAndFeelMenu);
-        addLookAndFeelListener(crossplatformLookAndFeel, UIManager.getCrossPlatformLookAndFeelClassName());
+        createMenuItem("Системная схема", KeyEvent.VK_S, lookAndFeelMenu, (event) ->
+        { setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            this.invalidate(); });
+        createMenuItem("Универсальная схема", KeyEvent.VK_S, lookAndFeelMenu, (event) ->
+        { setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            this.invalidate(); });
         return lookAndFeelMenu;
     }
 
     private JMenu CreateTestMenu()
     {
         JMenu testMenu = createSubMenu("Тесты", KeyEvent.VK_T, "Тестовые команды");
-        JMenuItem addLogMessageItem = createMenuItem("Сообщение в лог", KeyEvent.VK_S, testMenu);
-        addTestListener(addLogMessageItem);
+        createMenuItem("Сообщение в лог", KeyEvent.VK_S, testMenu, (event) -> { Logger.debug("Новая строка"); });
         return testMenu;
     }
 
     private JMenu CreateExitMenu()
     {
         JMenu exitMenu = createSubMenu("Выход", KeyEvent.VK_E, "Закрытие приложения");
-        JMenuItem subExitItem = createMenuItem("Закрыть приложение", KeyEvent.VK_E, exitMenu);
-        addExitListener(subExitItem);
+        createMenuItem("Закрыть приложение", KeyEvent.VK_E, exitMenu, (event) -> { confirmExit(); });
         return exitMenu;
-    }
-
-    private void addLookAndFeelListener(JMenuItem item, String name)
-    {
-        item.addActionListener((event) -> {
-            setLookAndFeel(name);
-            this.invalidate();
-        });
-    }
-
-    private void addTestListener(JMenuItem item)
-    {
-        item.addActionListener((event) -> { Logger.debug("Новая строка"); });
-    }
-
-    private void addExitListener(JMenuItem item)
-    {
-        item.addActionListener((event) -> { confirmExit(); });
     }
 
     public static void confirmExit()
