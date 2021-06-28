@@ -19,6 +19,7 @@ public class RobotsProgram
       SwingUtilities.invokeLater(() -> {
         MainApplicationFrame frame = new MainApplicationFrame();
         frame.pack();
+        frame.restore(new PositionStore(frame, System.getProperty("user.home")));
         frame.setVisible(true);
         frame.setExtendedState(Frame.MAXIMIZED_BOTH);
       });

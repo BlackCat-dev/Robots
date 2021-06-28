@@ -1,18 +1,22 @@
 package gui;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import javax.swing.*;
-import java.beans.PropertyVetoException;
-import java.io.*;
-import java.util.HashSet;
 
 import log.Logger;
 
-public class MainApplicationFrame extends JFrame
+public class MainApplicationFrame extends JFrame implements HaveStorableFrames
 {
     private final JDesktopPane desktopPane = new JDesktopPane();
-    private final HashSet<Component> windowRegistry = new HashSet<>();
 
     public MainApplicationFrame() {
         //Make the big window be indented 50 pixels from each edge
@@ -25,99 +29,26 @@ public class MainApplicationFrame extends JFrame
 
         setContentPane(desktopPane);
 
-        customization();
+        LogWindow logWindow = createLogWindow();
+        addWindow(logWindow);
 
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                confirmExit();
-            }
-        });
+        GameWindow gameWindow = new GameWindow();
+        gameWindow.setSize(400,  400);
+        addWindow(gameWindow);
+
+        addWindowListener(initExitListener());
 
         setJMenuBar(generateMenuBar());
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void customization() {
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("position.txt"));
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(" ");
-                int[] converted = new int[parts.length];
-
-                switch (parts[0]) {
-                    case "log":
-                        for (int i = 1; i < 6; i++)
-                            converted[i] = Integer.parseInt(parts[i]);
-                        addWindow(createLogWindow(converted[1],converted[2],converted[3],converted[4],converted[5]));
-                        break;
-                    case "game":
-                        for (int i = 1; i < 6; i++)
-                            converted[i] = Integer.parseInt(parts[i]);
-                        addWindow(createGameWindow(converted[1],converted[2],converted[3],converted[4],converted[5]));
-                        break;
-                    default:
-                        break;
-
-                }
-            }
-        } catch (Exception e) {
-            createDefaultPair();
-            Logger.debug("Ошибка: " + e.toString());
-            Logger.debug("Созданы окна по-умолчанию.");
-        }
-    }
-
-    protected LogWindow createLogWindow(int x, int y, int width, int height, int state)
+    protected LogWindow createLogWindow()
     {
         LogWindow logWindow = new LogWindow(Logger.getDefaultLogSource());
-        logWindow.setName("log");
-        logWindow.setLocation(x,y);
-        logWindow.setSize(width, height);
-
-        boolean windowState = intToBoolean(state);
-        try {
-            logWindow.setIcon(windowState);
-        } catch (PropertyVetoException e) {
-            e.printStackTrace();
-        }
-
-
-        setMinimumSize(logWindow.getSize());
-        windowRegistry.add(logWindow);
+        logWindow.setMinimumSize(logWindow.getSize());
+        logWindow.pack();
         Logger.debug("Протокол работает");
         return logWindow;
-    }
-
-    private LogWindow createLogWindow() {
-        return createLogWindow(10,10 ,300, 800, 0);
-    }
-
-    private GameWindow createGameWindow(int x, int y, int width, int height, int state)
-    {
-        GameWindow gameWindow = new GameWindow();
-        gameWindow.setName("game");
-        gameWindow.setLocation(x, y);
-        gameWindow.setSize(width, height);
-
-        boolean windowState = intToBoolean(state);
-        try {
-            gameWindow.setIcon(windowState);
-        } catch (PropertyVetoException e) {
-            e.printStackTrace();
-        }
-
-        windowRegistry.add(gameWindow);
-        return gameWindow;
-    }
-
-    private GameWindow createGameWindow() {
-        return createGameWindow(0, 0, 400, 400, 0);
-    }
-
-    private void createDefaultPair() {
-        addWindow(createLogWindow());
-        addWindow(createGameWindow());
     }
 
     protected void addWindow(JInternalFrame frame)
@@ -172,45 +103,40 @@ public class MainApplicationFrame extends JFrame
     private JMenu CreateExitMenu()
     {
         JMenu exitMenu = createSubMenu("Выход", KeyEvent.VK_E, "Закрытие приложения");
-        createMenuItem("Закрыть приложение", KeyEvent.VK_E, exitMenu, (event) -> confirmExit());
+        createMenuItem("Закрыть приложение", KeyEvent.VK_E, exitMenu, (event) -> {Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+                new WindowEvent(this, WindowEvent.WINDOW_CLOSING));});
         return exitMenu;
     }
 
-    private void confirmExit()
-    {
-        JFrame frame = new JFrame("Exit confirmation frame");
-        String[] options = { "Да", "Нет" };
-        int state;
-        int n = JOptionPane.showOptionDialog(frame, "Вы действительно хотите закрыть приложение?",
-                "Подтверждение", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
-        if (n == JOptionPane.YES_OPTION){
-            try {
-                PrintWriter writer = new PrintWriter("position.txt");
-                writer.close();
-                BufferedWriter br = new BufferedWriter(new FileWriter("position.txt"));
-                for (Component component : windowRegistry) {
-
-                    if (component.getInputContext() != null)
-                        state = 0;
-                    else
-                        state = 1;
-
-                    br.append(component.getName()).append(" ")
-                            .append(String.valueOf(component.getX())).append(" ")
-                            .append(String.valueOf(component.getY())).append(" ")
-                            .append(String.valueOf(component.getWidth())).append(" ")
-                            .append(String.valueOf(component.getHeight())).append(" ")
-                            .append(String.valueOf(state)).append(" ");
-                    br.append(" \n");
+    protected WindowAdapter initExitListener() {
+        return new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                Object[] options = {"Да", "Нет"};
+                int result = JOptionPane.showOptionDialog(
+                        desktopPane,
+                        "Закрыть программу?",
+                        "Закрыть программу?",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        options,
+                        options[0]
+                );
+                if (result == 0) {
+                    try {
+                        PositionStore store = new PositionStore(MainApplicationFrame.this, System.getProperty("user.home"));
+                        store.storePositions();
+                    } catch (IOException exc) {
+                        JOptionPane.showMessageDialog(
+                                desktopPane,
+                                "Во время сохранения данных произошла ошибка."
+                        );
+                    }
+                    setDefaultCloseOperation(EXIT_ON_CLOSE);
                 }
-                br.flush();
-                br.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                System.exit(0);
             }
-        }
+        };
     }
 
     private void setLookAndFeel(String className)
@@ -227,11 +153,24 @@ public class MainApplicationFrame extends JFrame
         }
     }
 
-    private boolean intToBoolean(int input) {
-        if((input==0)||(input==1)) {
-            return input!=0;
-        }else {
-            throw new IllegalArgumentException("Входное значение может быть равно только 0 или 1 !");
+    @Override
+    public List<HasState> getDataForStore() {
+        JInternalFrame[] allFrames = desktopPane.getAllFrames();
+        List<HasState> toStore = new ArrayList<>();
+        for (JInternalFrame frame: allFrames) {
+            if (frame instanceof HasState) {
+                toStore.add((HasState) frame);
+            }
+        }
+        return toStore;
+    }
+
+    @Override
+    public void restore(PositionStore store) {
+        Map<String, WindowState> data = store.getStoredData();
+        List<HasState> framesToRestore = getDataForStore();
+        for (HasState frame: framesToRestore) {
+            frame.setState(data);
         }
     }
 }
