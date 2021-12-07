@@ -5,11 +5,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.io.File;
 import javax.swing.event.InternalFrameAdapter;
 import javax.swing.event.InternalFrameEvent;
 
@@ -20,10 +15,12 @@ import log.Logger;
 
 public class MainApplicationFrame extends JFrame
 {
-    private final JDesktopPane desktopPane = new JDesktopPane();
-    String homeDir = System.getProperty("user.home");
+    public static final JDesktopPane desktopPane = new JDesktopPane();
 
     public MainApplicationFrame() {
+
+        MainApplicationFrame frame = this;
+
         int inset = 50;
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setBounds(inset, inset,
@@ -40,43 +37,25 @@ public class MainApplicationFrame extends JFrame
         addWindow(gameWindow);
         addWindow(logWindow);
 
-        File gameFile = new File(homeDir, gameWindow.getName() + ".bin");
-        File logFile = new File(homeDir, logWindow.getName() + ".bin");
-        if (gameFile.exists() && logFile.exists()) {
-            boolean toRestore = ConfirmWindow.confirmRestore(this) == 0;
-            if (toRestore) {
-                WindowState gameInfo = Saver.deserialize(gameFile);
-                Saver.restoreWindow(gameWindow, gameInfo);
-                WindowState logInfo = Saver.deserialize(logFile);
-                Saver.restoreWindow(logWindow, logInfo);
-            }
-        }
+        Saver.restore(gameWindow, logWindow, frame);
+
+        addWindowListener(initExitListener());
         setJMenuBar(generateMenuBar());
-        close();
-
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
     }
 
-    private void saveWindows(JDesktopPane desktopPane){
-        for (JInternalFrame window: desktopPane.getAllFrames()) {
-            WindowState windowState = new WindowState(window.getName(),
-                    window.getWidth(), window.getHeight(), window.getX(),
-                    window.getY(), window.isMaximum(), window.isIcon());
-            Saver.serialize(windowState, window.getName() + ".bin");
-        }
-    }
-
-    protected void close(){
+    protected WindowAdapter initExitListener() {
         MainApplicationFrame frame = this;
-        this.addWindowListener(new WindowAdapter() {
+        return new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                frame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-                if (ConfirmWindow.confirmExit(frame) == 0){
-                    saveWindows(desktopPane);
+                if (!ConfirmWindow.confirmExit(frame)){
+                    Saver.saveWindows(desktopPane);
+                    Saver.saveWindowsMain(frame);
                     frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
                 }
             }
-        });
+        };
     }
 
     protected LogWindow createLogWindow()
@@ -98,11 +77,15 @@ public class MainApplicationFrame extends JFrame
         frame.addInternalFrameListener(new InternalFrameAdapter() {
             @Override
             public void internalFrameClosing(InternalFrameEvent e) {
-                int exitCode = ConfirmWindow.confirmExit(frame);
-                if (exitCode == JOptionPane.YES_OPTION){
-                    WindowState windowState = new WindowState(frameName, frame.getWidth(),
-                            frame.getHeight(), frame.getX(), frame.getY(),
-                            frame.isMaximum(), frame.isIcon());
+                if (ConfirmWindow.confirmExit(frame)){
+                    WindowState windowState = new WindowState();
+                    windowState.setName(frame.getName());
+                    windowState.setWidth(frame.getWidth());
+                    windowState.setHeight(frame.getHeight());
+                    windowState.setPositionX(frame.getX());
+                    windowState.setPositionY(frame.getY());
+                    windowState.setMax(frame.isMaximum());
+                    windowState.setMin(frame.isIcon());
                     Saver.serialize(windowState, frameName + ".bin");
                     frame.dispose();
                 }
@@ -157,8 +140,8 @@ public class MainApplicationFrame extends JFrame
     private JMenu CreateExitMenu()
     {
         JMenu exitMenu = createSubMenu("Выход", KeyEvent.VK_E, "Закрытие приложения");
-        createMenuItem("Закрыть приложение", KeyEvent.VK_E, exitMenu, (event) -> {Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
-                new WindowEvent(this, WindowEvent.WINDOW_CLOSING));});
+        createMenuItem("Закрыть приложение", KeyEvent.VK_E, exitMenu, (event) -> Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+                new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
         return exitMenu;
     }
 

@@ -1,15 +1,11 @@
 package gui;
 
-import java.awt.*;
-import java.beans.PropertyVetoException;
-import java.util.Map;
-
-import javax.swing.JInternalFrame;
-import javax.swing.JPanel;
-
 import log.LogChangeListener;
 import log.LogEntry;
 import log.LogWindowSource;
+
+import javax.swing.*;
+import java.awt.*;
 
 public class LogWindow extends JInternalFrame implements LogChangeListener {
     private final LogWindowSource m_logSource;
