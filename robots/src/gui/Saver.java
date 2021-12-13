@@ -23,46 +23,43 @@ public class Saver {
         }
     }
 
-    public static WindowState deserialize(File file){
-        WindowState windowState = new WindowState();
-        try {
-            InputStream is = new FileInputStream(file);
-            ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
+    public static WindowState deserialize(Container nameFrame){
+        File frameFile = new File(homeDir, nameFrame.getName() + ".bin");
+        if (frameFile.exists()) {
+            WindowState windowState = new WindowState();
             try {
-                windowState = (WindowState) ois.readObject();
-            } catch (ClassNotFoundException e) {
+                InputStream is = new FileInputStream(frameFile);
+                ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
+                try {
+                    windowState = (WindowState) ois.readObject();
+                } catch (ClassNotFoundException e) {
+                    JOptionPane.showMessageDialog(
+                            MainApplicationFrame.desktopPane,
+                            "Во время восстановления данных произошла ошибка."
+                    );
+                }
+            } catch (IOException e) {
                 JOptionPane.showMessageDialog(
                         MainApplicationFrame.desktopPane,
                         "Во время восстановления данных произошла ошибка."
                 );
             }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(
-                    MainApplicationFrame.desktopPane,
-                    "Во время восстановления данных произошла ошибка."
-            );
-        }
-        return windowState;
-    }
-
-    public static void restore(JInternalFrame nameWindowOne, JInternalFrame nameWindowTwo, MainApplicationFrame nameFrame){
-        File fileNameOne = new File(homeDir, nameWindowOne.getName() + ".bin");
-        File fileNameTwo = new File(homeDir, nameWindowTwo.getName() + ".bin");
-        File frameFile = new File(homeDir, nameFrame.getName() + ".bin");
-        if (fileNameOne.exists() && fileNameTwo.exists() && frameFile.exists()) {
-            if (!ConfirmWindow.confirmRestore(MainApplicationFrame.desktopPane)) {
-                windowInfo(fileNameOne, nameWindowOne);
-                windowInfo(fileNameTwo, nameWindowTwo);
-                frameStateMain(frameFile, nameFrame);
-            } else {
-                standardWindow(nameFrame);
-            }
+            return windowState;
+        }else {
+            return null;
         }
     }
 
-    private static void windowInfo(File fileName, JInternalFrame widowName) {
-        WindowState info = deserialize(fileName);
+    public static void windowInfo(JInternalFrame widowName) {
+        WindowState info = deserialize(widowName);
         restoreWindow(widowName, info);
+    }
+
+    public static void frameStateMain(MainApplicationFrame frame) {
+        WindowState frameInfo = deserialize(frame);
+        assert frameInfo != null;
+        restoreContainer(frame, frameInfo);
+        frame.setVisible(true);
     }
 
     public static void restoreContainer(Container frame, WindowState windowState){
@@ -93,37 +90,25 @@ public class Saver {
     public static void saveWindows(JDesktopPane desktopPane){
         for (JInternalFrame window: desktopPane.getAllFrames()) {
             WindowState windowState = new WindowState();
-            windowState.setName(window.getName());
-            windowState.setWidth(window.getWidth());
-            windowState.setHeight(window.getHeight());
-            windowState.setPositionX(window.getX());
-            windowState.setPositionY(window.getY());
+            savedParameters(windowState, window);
             windowState.setMax(window.isMaximum());
             windowState.setMin(window.isIcon());
             Saver.serialize(windowState, window.getName() + ".bin");
         }
     }
 
-    public static void frameStateMain(File fileName, MainApplicationFrame frame) {
-        WindowState frameInfo = deserialize(fileName);
-        restoreContainer(frame, frameInfo);
-        frame.setVisible(true);
-    }
-
     public static void saveWindowsMain(MainApplicationFrame frame) {
         WindowState windowState = new WindowState();
+        savedParameters(windowState, frame);
+        serialize(windowState, frame.getName() + ".bin");
+    }
+
+    public static void savedParameters(WindowState windowState, Container frame){
         windowState.setName(frame.getName());
         windowState.setWidth(frame.getWidth());
         windowState.setHeight(frame.getHeight());
         windowState.setPositionX(frame.getX());
         windowState.setPositionY(frame.getY());
-        serialize(windowState, frame.getName() + ".bin");
-    }
-
-    public static void standardWindow(MainApplicationFrame frame){
-        frame.pack();
-        frame.setVisible(true);
-        frame.setExtendedState(Frame.MAXIMIZED_BOTH);
     }
 
 }

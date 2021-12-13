@@ -1,6 +1,7 @@
 package gui;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class RobotsProgram {
   public static void main(String[] args) {
@@ -15,5 +16,11 @@ public class RobotsProgram {
     SwingUtilities.invokeLater(() -> {
       MainApplicationFrame frame = new MainApplicationFrame();
     });
+  }
+
+  public static void standardWindow(MainApplicationFrame frame) {
+    frame.pack();
+    frame.setVisible(true);
+    frame.setExtendedState(Frame.MAXIMIZED_BOTH);
   }
 }

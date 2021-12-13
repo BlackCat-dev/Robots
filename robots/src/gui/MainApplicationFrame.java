@@ -37,7 +37,13 @@ public class MainApplicationFrame extends JFrame
         addWindow(gameWindow);
         addWindow(logWindow);
 
-        Saver.restore(gameWindow, logWindow, frame);
+        if (!ConfirmWindow.confirmRestore(MainApplicationFrame.desktopPane)) {
+            Saver.windowInfo(gameWindow);
+            Saver.windowInfo(logWindow);
+            Saver.frameStateMain(frame);
+        } else {
+            RobotsProgram.standardWindow(frame);
+        }
 
         addWindowListener(initExitListener());
         setJMenuBar(generateMenuBar());
@@ -52,7 +58,7 @@ public class MainApplicationFrame extends JFrame
                 if (!ConfirmWindow.confirmExit(frame)){
                     Saver.saveWindows(desktopPane);
                     Saver.saveWindowsMain(frame);
-                    frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+                    System.exit(0);
                 }
             }
         };
@@ -79,11 +85,7 @@ public class MainApplicationFrame extends JFrame
             public void internalFrameClosing(InternalFrameEvent e) {
                 if (ConfirmWindow.confirmExit(frame)){
                     WindowState windowState = new WindowState();
-                    windowState.setName(frame.getName());
-                    windowState.setWidth(frame.getWidth());
-                    windowState.setHeight(frame.getHeight());
-                    windowState.setPositionX(frame.getX());
-                    windowState.setPositionY(frame.getY());
+                    Saver.savedParameters(windowState, frame);
                     windowState.setMax(frame.isMaximum());
                     windowState.setMin(frame.isIcon());
                     Saver.serialize(windowState, frameName + ".bin");
