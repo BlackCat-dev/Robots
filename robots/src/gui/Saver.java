@@ -25,8 +25,8 @@ public class Saver {
 
     public static WindowState deserialize(Container nameFrame){
         File frameFile = new File(homeDir, nameFrame.getName() + ".bin");
+        WindowState windowState = new WindowState();
         if (frameFile.exists()) {
-            WindowState windowState = new WindowState();
             try {
                 InputStream is = new FileInputStream(frameFile);
                 ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(is));
@@ -41,13 +41,18 @@ public class Saver {
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(
                         MainApplicationFrame.desktopPane,
-                        "Во время восстановления данных произошла ошибка."
+                        "Во время восстановления данных произошла ошибка.\n" +
+                                "Ошибка восстановления окна: " + nameFrame.getName()
                 );
             }
-            return windowState;
-        }else {
-            return null;
+        }else{
+            JOptionPane.showMessageDialog(
+                    MainApplicationFrame.desktopPane,
+                    "Во время восстановления данных произошла ошибка.\n" +
+                            "Отсутствует файл для восстановления окна: " + nameFrame.getName()
+            );
         }
+        return windowState;
     }
 
     public static void windowInfo(JInternalFrame widowName) {
@@ -57,7 +62,6 @@ public class Saver {
 
     public static void frameStateMain(MainApplicationFrame frame) {
         WindowState frameInfo = deserialize(frame);
-        assert frameInfo != null;
         restoreContainer(frame, frameInfo);
         frame.setVisible(true);
     }
